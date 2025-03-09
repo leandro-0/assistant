@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 import faiss
 
-# import spacy
+import spacy
 import re
 import pickle
 import pandas as pd
@@ -28,8 +28,8 @@ finally:
 df = pd.read_csv("preprocessed.csv")
 logger.info("Dataframe loaded")
 
-# nlp = spacy.load("es_core_news_sm")
-# logger.info("Spacy loaded")
+nlp = spacy.load("es_core_news_sm")
+logger.info("Spacy loaded")
 
 model = SentenceTransformer("nomic-ai/nomic-embed-text-v2-moe", trust_remote_code=True)
 logger.info("SentenceTransformer model loaded")
@@ -46,13 +46,14 @@ logger.info("Chunks loaded")
 def clean_query(query: str) -> str:
     query = query.replace('"', "").replace("'", "")
     query = query.replace("\n", " ").replace("\r", " ")
+    query = query.replace("*", "").replace("-", "").replace("~", "")
     query = query.replace("  ", " ").strip()
-    return query.lower()
-    # doc = nlp(query)
-    # sentences = [sent.text.strip() for sent in doc.sents]
-    # return " ".join(
-    #     [sent for sent in sentences if len(sent) > 0 and sent[-1] == "."]
-    # ).lower()
+
+    doc = nlp(query)
+    sentences = [sent.text.strip() for sent in doc.sents]
+    return " ".join(
+        [sent for sent in sentences if len(sent) > 0 and sent[-1] == "."]
+    ).lower()
 
 
 def get_filename(article: Article) -> str:

@@ -6,6 +6,7 @@ from fastapi import (
 )
 from app.config.templates import templates
 from app.engine.retriever import search
+from app.engine.rewriter import rewrite
 import json
 import logging
 
@@ -35,7 +36,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
 async def send_data(query: str, websocket: WebSocket):
     logger.info(f"Received query: {query}")
-    articles = search(query, top_k=10)
+    new_query = rewrite(query)
+    logger.info(f"New query: {new_query}")
+
+    articles = search(new_query, top_k=10)
     articles_data = [
         {
             "title": article.title,
