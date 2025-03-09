@@ -4,11 +4,12 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from app.database.models import Article
-from app.database.connection import Session
 from app.config.templates import templates
+from app.engine.retriever import search
 import json
+import logging
 
+logger = logging.getLogger("uvicorn.error")
 router = APIRouter(tags=["home"])
 
 
@@ -33,9 +34,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def send_data(query: str, websocket: WebSocket):
-    db = Session()
-    articles = db.query(Article).limit(5).all()
-
+    logger.info(f"Received query: {query}")
+    articles = search(query, top_k=10)
     articles_data = [
         {
             "title": article.title,
@@ -46,4 +46,3 @@ async def send_data(query: str, websocket: WebSocket):
     ]
 
     await websocket.send_text(json.dumps(articles_data))
-    db.close()
