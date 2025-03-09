@@ -38,26 +38,53 @@
   </div>
   <div class="container mx-auto p-6">
     <label class="form-control">
-      <textarea class="textarea textarea-primary h-24" placeholder="Ingresa tu consulta..."></textarea>
+      <textarea id="searchQuery" class="textarea textarea-primary h-24" placeholder="Ingresa tu consulta..."></textarea>
       <div class="label">
-        <button class="btn btn-primary btn-sm">Buscar</button>
+        <button id="searchButton" class="btn btn-primary btn-sm">Buscar</button>
       </div>
     </label>
-    {% for i in range(5) %}
-    <div class="card bg-base-100 shadow-xl my-4">
-      <div class="card-body">
-        <h2 class="card-title">
-          <div class="badge badge-secondary">AIBR</div>
-          Articulo {{ i }}
-        </h2>
-        <p>Resumen</p>
-        <div class="card-actions justify-end">
-          <button class="btn btn-primary btn-sm">Empezar chat</button>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
+    <div id="results"></div>
   </div>
+
+  <script>
+    let socket;
+    document.getElementById("searchButton").addEventListener("click", function () {
+      const query = document.getElementById("searchQuery").value;
+      if (!query.trim()) return;
+
+      if (socket) {
+        socket.close();
+      }
+
+      socket = new WebSocket("ws://localhost:8000/ws");
+      socket.onopen = function () {
+        socket.send(query);
+      };
+
+      socket.onmessage = function (event) {
+        const articles = JSON.parse(event.data);
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "";
+
+        articles.forEach(article => {
+          const articleCard = `
+          <div class="card bg-base-100 shadow-xl my-4">
+            <div class="card-body">
+              <h2 class="card-title">
+                <div class="badge badge-secondary">${article.origin}</div>
+                ${article.title}
+              </h2>
+              <p>Resumen (posteriormente...)</p>
+              <div class="card-actions justify-end">
+                <a href='${article.page_url}' class="btn btn-primary btn-sm">Ver artículo</a>
+              </div>
+            </div>
+          </div>`;
+          resultsDiv.innerHTML += articleCard;
+        });
+      };
+    });
+  </script>
 </body>
 
 </html>
