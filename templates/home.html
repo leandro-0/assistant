@@ -39,10 +39,19 @@
   <div class="container mx-auto p-6">
     <label class="form-control">
       <textarea id="searchQuery" class="textarea textarea-primary h-24" placeholder="Ingresa tu consulta..."></textarea>
+      <div id="new_query" class="hidden relative bg-base-100 p-10 mt-3 mb-2 border border-base-content/10 rounded-box">
+        <div class="badge badge-xs absolute end-2 top-2">Nuevo query</div>
+        <div class="text-base-content/70" id="new_query_text">text-base-content/70</div>
+      </div>
       <div class="label">
         <button id="searchButton" class="btn btn-primary btn-sm">Buscar</button>
       </div>
     </label>
+
+    <div id="loading" class="hidden text-center py-4">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
     <div id="results"></div>
   </div>
 
@@ -51,6 +60,10 @@
     document.getElementById("searchButton").addEventListener("click", function () {
       const query = document.getElementById("searchQuery").value;
       if (!query.trim()) return;
+
+      document.getElementById("new_query").classList.add("hidden");
+      document.getElementById("loading").classList.remove("hidden");
+      document.getElementById("results").innerHTML = "";
 
       if (socket) {
         socket.close();
@@ -62,10 +75,19 @@
       };
 
       socket.onmessage = function (event) {
-        const articles = JSON.parse(event.data);
+        document.getElementById("loading").classList.add("hidden");
+        const response = JSON.parse(event.data);
+        const articles = response.articles;
         const resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = "";
 
+        if (response.new_query) {
+          document.getElementById("new_query_text").textContent = response.new_query;
+          document.getElementById("new_query").classList.remove("hidden");
+        } else {
+          document.getElementById("new_query").classList.add("hidden");
+        }
+
+        resultsDiv.innerHTML = "";
         articles.forEach(article => {
           const articleCard = `
           <div class="card bg-base-100 shadow-xl my-4">

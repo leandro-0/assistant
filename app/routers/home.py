@@ -40,14 +40,17 @@ async def send_data(query: str, websocket: WebSocket):
     logger.info(f"New query: {new_query}")
 
     articles = search(new_query, top_k=10)
-    articles_data = [
-        {
-            "title": article.title,
-            "page_url": article.page_url,
-            "origin": article.issue.origin,
-            "published": article.published.strftime("%d-%m-%Y"),
-        }
-        for article in articles
-    ]
+    data = {
+        "new_query": new_query,
+        "articles": [
+            {
+                "title": article.title,
+                "page_url": article.page_url,
+                "origin": article.issue.origin,
+                "published": article.published.strftime("%d-%m-%Y"),
+            }
+            for article in articles
+        ],
+    }
 
-    await websocket.send_text(json.dumps(articles_data))
+    await websocket.send_text(json.dumps(data))
