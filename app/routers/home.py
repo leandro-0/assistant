@@ -45,6 +45,7 @@ async def send_data(query: str, websocket: WebSocket):
             "title": article.title,
             "page_url": article.page_url,
             "origin": article.issue.origin,
+            "published": article.published.strftime("%d-%m-%Y"),
         }
         for article in articles
     ]

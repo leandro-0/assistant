@@ -71,12 +71,16 @@
           <div class="card bg-base-100 shadow-xl my-4">
             <div class="card-body">
               <h2 class="card-title">
-                <div class="badge badge-secondary">${article.origin}</div>
                 ${article.title}
               </h2>
+              <div class="justify-start">                
+                <div class="badge badge-secondary">${article.origin}</div>
+                <div class="badge badge-accent">${article.published}</div>
+              </div>
               <p>Resumen (posteriormente...)</p>
               <div class="card-actions justify-end">
                 <a href='${article.page_url}' class="btn btn-primary btn-sm">Ver artículo</a>
+                <a href='#' class="btn btn-secondary btn-sm">Empezar chat</a>
               </div>
             </div>
           </div>`;
