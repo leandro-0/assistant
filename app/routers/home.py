@@ -36,7 +36,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 async def send_data(query: str, websocket: WebSocket):
     logger.info(f"Received query: {query}")
-    new_query = rewrite(query)
+    new_query = rewrite(query, use_local_model=True)
     logger.info(f"New query: {new_query}")
 
     articles = search(new_query, top_k=10)
