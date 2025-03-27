@@ -53,43 +53,152 @@
     </div>
 
     <div id="results"></div>
-  </div>
+    <div class="drawer drawer-end">
+      <input id="drawer-chat" type="checkbox" class="drawer-toggle" />
+      <div class="drawer-content"></div>
+      <div class="drawer-side">
+        <div class="drawer-overlay bg-black opacity-80 fixed inset-0"></div>
 
-  <script>
-    let socket;
-    document.getElementById("searchButton").addEventListener("click", function () {
-      const query = document.getElementById("searchQuery").value;
-      if (!query.trim()) return;
+        <div class="w-[45vw] bg-base-200 min-h-full p-6">
+          <!-- chat header -->
+          <div class="flex items-center justify-between h-[5vh] mb-2">
+            <h2 class="font-bold truncate overflow-hidden whitespace-nowrap">
+              Titulo del artículo
+            </h2>
 
-      document.getElementById("new_query").classList.add("hidden");
-      document.getElementById("loading").classList.remove("hidden");
-      document.getElementById("results").innerHTML = "";
+            <div class="flex gap-2">
+              <button class="btn btn-circle" onclick="closeChat()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                  <path
+                    d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-      if (socket) {
-        socket.close();
+          <!-- messages container -->
+          <div class="overflow-y-auto h-[80vh] p-2 bg-base-100 rounded-box" id="messagesContainer">
+            <div class="chat chat-start">
+              <div class="chat-bubble mb-2">Hola, ¿en qué puedo ayudarte?</div>
+            </div>
+          </div>
+
+
+          <!-- input section -->
+          <div class="flex items-center justify-between bg-base-100 mt-5 h-[7vh] p-3 rounded-box">
+            <input id="chat-message" type="text" placeholder="Escribe tu consulta..."
+              class="input input-bordered w-full mr-2" />
+            <button class="btn btn-circle" id="sendMessage" onclick="sendMessage()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                <path
+                  d="M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.926A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.086l-1.414 4.926a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.293-7.155.75.75 0 0 0 0-1.114A28.897 28.897 0 0 0 3.105 2.288Z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let chatSocket;
+      let currentArticleId = null;
+      let currentArticleTitle = null;
+
+      function closeChat() {
+        document.getElementById("drawer-chat").checked = false;
+        currentArticleId = null;
+        currentArticleTitle = null;
+
+        messagesContainer = document.getElementById("messagesContainer");
+        messagesContainer.innerHTML = "";
+
+        if (chatSocket) {
+          chatSocket.close();
+        }
       }
 
-      socket = new WebSocket("ws://localhost:8000/ws");
-      socket.onopen = function () {
-        socket.send(query);
-      };
+      function startChat(articleId, articleTitle) {
+        currentArticleId = articleId;
+        currentArticleTitle = articleTitle;
 
-      socket.onmessage = function (event) {
-        document.getElementById("loading").classList.add("hidden");
-        const response = JSON.parse(event.data);
-        const articles = response.articles;
-        const resultsDiv = document.getElementById("results");
+        document.getElementById("drawer-chat").checked = true;
+        document.querySelector(".drawer-side h2").textContent = articleTitle;
+        if (chatSocket) {
+          chatSocket.close();
+        }
+        chatSocket = new WebSocket("ws://localhost:8000/chat");
 
-        if (response.new_query) {
-          document.getElementById("new_query_text").textContent = response.new_query;
-          document.getElementById("new_query").classList.remove("hidden");
-        } else {
-          document.getElementById("new_query").classList.add("hidden");
+        chatSocket.onmessage = function (event) {
+          const data = JSON.parse(event.data);
+          if (data.message) {
+            addMessageToChat(data.message, "assistant");
+          } else if (data.error) {
+            console.error("Error:", data.error);
+          }
+        };
+
+        chatSocket.onclose = function () {
+          console.log("Conexión WebSocket cerrada");
+        };
+      }
+
+      function sendMessage() {
+        const messageInput = document.getElementById("chat-message");
+        const messageText = messageInput.value.trim();
+        if (messageText && chatSocket) {
+          chatSocket.send(JSON.stringify({
+            article_id: currentArticleId,
+            message: messageText
+          }));
+          addMessageToChat(messageText, "user");
+          messageInput.value = "";
+        }
+      }
+
+      function addMessageToChat(text, sender) {
+        const chatContainer = document.querySelector(".overflow-y-auto");
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("chat", sender === "user" ? "chat-end" : "chat-start");
+        messageDiv.innerHTML = `<div class="chat-bubble mb-2">${text}</div>`;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    </script>
+
+    <script>
+      let socket;
+      document.getElementById("searchButton").addEventListener("click", function () {
+        const query = document.getElementById("searchQuery").value;
+        if (!query.trim()) return;
+
+        document.getElementById("new_query").classList.add("hidden");
+        document.getElementById("loading").classList.remove("hidden");
+        document.getElementById("results").innerHTML = "";
+
+        if (socket) {
+          socket.close();
         }
 
-        resultsDiv.innerHTML = "";
-        articles.forEach(article => {
-          const articleCard = `
+        socket = new WebSocket("ws://localhost:8000/ws");
+        socket.onopen = function () {
+          socket.send(query);
+        };
+
+        socket.onmessage = function (event) {
+          document.getElementById("loading").classList.add("hidden");
+          const response = JSON.parse(event.data);
+          const articles = response.articles;
+          const resultsDiv = document.getElementById("results");
+
+          if (response.new_query) {
+            document.getElementById("new_query_text").textContent = response.new_query;
+            document.getElementById("new_query").classList.remove("hidden");
+          } else {
+            document.getElementById("new_query").classList.add("hidden");
+          }
+
+          resultsDiv.innerHTML = "";
+          articles.forEach(article => {
+            const articleCard = `
           <div class="card bg-base-100 shadow-xl my-4">
             <div class="card-body">
               <h2 class="card-title">
@@ -102,15 +211,23 @@
               <p>Resumen (posteriormente...)</p>
               <div class="card-actions justify-end">
                 <a href='${article.page_url}' target="_blank" class="btn btn-primary btn-sm">Ver artículo</a>
-                <a href='#' class="btn btn-secondary btn-sm">Empezar chat</a>
+                <button class="btn btn-secondary btn-sm drawer-button start-chat" data-article-id="${article.id}" data-article-title="${article.title}" for="drawer-chat">Empezar chat</button>
               </div>
             </div>
           </div>`;
-          resultsDiv.innerHTML += articleCard;
-        });
-      };
-    });
-  </script>
+            resultsDiv.innerHTML += articleCard;
+          });
+
+          document.querySelectorAll(".start-chat").forEach(button => {
+            button.addEventListener("click", function () {
+              const articleId = this.getAttribute("data-article-id");
+              const articleTitle = this.getAttribute("data-article-title");
+              startChat(articleId, articleTitle);
+            });
+          });
+        };
+      });
+    </script>
 </body>
 
 </html>

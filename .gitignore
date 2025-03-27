@@ -203,3 +203,5 @@ freeze.txt
 queries/
 index-*.faiss
 preprocessed.csv
+functions/
+test.py
