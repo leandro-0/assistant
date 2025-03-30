@@ -7,6 +7,7 @@ from app.core.utils import get_filename
 from app.database.models import Article
 from app.database.connection import Session
 from app.state.documents_store_state import get_documents_store_state
+from app.engine.reranker import rerank
 
 logger = logging.getLogger("uvicorn.error")
 try:
@@ -56,16 +57,21 @@ def search(
 
     already_in = set()
     results = []
+    texts = []
     for i in indices[0]:
         id = store_state.store.chunks_ids[i]
         if id in already_in:
             continue
 
+        texts.append(store_state.store.chunk_text_from_id(i))
         already_in.add(id)
         results.append(id)
         if len(results) == top_k:
             break
 
+    results = rerank(
+        query, [{"id": id, "text": text} for id, text in zip(results, texts)]
+    )
     titles = [
         re.sub(r"pack\\.*?\\", "", p)
         for p in store_state.store.df.iloc[results]["Path"]
