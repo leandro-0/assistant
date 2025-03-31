@@ -109,7 +109,11 @@
         currentArticleTitle = null;
 
         messagesContainer = document.getElementById("messagesContainer");
-        messagesContainer.innerHTML = "";
+        messagesContainer.innerHTML = `
+        <div class="chat chat-start">
+          <div class="chat-bubble mb-2">Hola, ¿en qué puedo ayudarte?</div>
+        </div>
+        `;
 
         if (chatSocket) {
           chatSocket.close();
