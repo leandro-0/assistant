@@ -7,6 +7,7 @@ from fastapi import (
 from app.config.templates import templates
 from app.engine.retriever import search
 from app.engine.rewriter import rewrite
+from app.middlewares.check_service import is_service_active
 import json
 import logging
 
@@ -24,6 +25,10 @@ active_connections = []
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    if not is_service_active():
+        await websocket.close(code=1001, reason="Service is inactive")
+        return
+
     await websocket.accept()
     active_connections.append(websocket)
     try:
