@@ -134,6 +134,12 @@
         chatSocket.onmessage = function (event) {
           const data = JSON.parse(event.data);
           if (data.message) {
+            // Remove the placeholder if it exists
+            const placeholder = document.getElementById("placeholder-feedback");
+            if (placeholder) {
+              placeholder.remove();
+            }
+
             addMessageToChat(data.message, "assistant");
           } else if (data.error) {
             console.error("Error:", data.error);
@@ -154,15 +160,21 @@
             message: messageText
           }));
           addMessageToChat(messageText, "user");
+          addMessageToChat("", "assistant", true);
           messageInput.value = "";
         }
       }
 
-      function addMessageToChat(text, sender) {
+      function addMessageToChat(text, sender, isPlaceholder = false) {
         const chatContainer = document.querySelector(".overflow-y-auto");
         const messageDiv = document.createElement("div");
         messageDiv.classList.add("chat", sender === "user" ? "chat-end" : "chat-start");
-        messageDiv.innerHTML = `<div class="chat-bubble mb-2">${text}</div>`;
+        if (isPlaceholder) {
+          messageDiv.id = "placeholder-feedback";
+          messageDiv.innerHTML = `<div class="chat-bubble mb-2"><span class="loading loading-dots loading-sm my-1"></span></div>`;
+        } else {
+          messageDiv.innerHTML = `<div class="chat-bubble mb-2">${text}</div>`;
+        }
         chatContainer.appendChild(messageDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
       }
