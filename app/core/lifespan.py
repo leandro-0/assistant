@@ -1,4 +1,3 @@
-import torch
 import logging
 from sentence_transformers import SentenceTransformer
 from contextlib import asynccontextmanager
@@ -21,7 +20,6 @@ async def lifespan(app: FastAPI):
     )
     __models["embeddings_chat"] = HuggingFaceEmbeddings(
         model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-        model_kwargs={"device": "cuda" if torch.cuda.is_available() else "cpu"},
     )
     __bedrock_client = client("bedrock-runtime", region_name="us-east-1")
     __reranker = Ranker(model_name="ms-marco-TinyBERT-L-2-v2", cache_dir="/opt")

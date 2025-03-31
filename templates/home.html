@@ -98,6 +98,11 @@
         </div>
       </div>
     </div>
+
+    <script>
+      let wsProtocol = location.protocol !== 'https:' ? 'ws' : 'wss';
+    </script>
+
     <script>
       let chatSocket;
       let currentArticleId = null;
@@ -129,7 +134,7 @@
         if (chatSocket) {
           chatSocket.close();
         }
-        chatSocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/chat");
+        chatSocket = new WebSocket(wsProtocol + "://" + location.hostname + ":" + location.port + "/chat");
 
         chatSocket.onmessage = function (event) {
           const data = JSON.parse(event.data);
@@ -194,7 +199,7 @@
           socket.close();
         }
 
-        socket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/ws");
+        socket = new WebSocket(wsProtocol + "://" + location.hostname + ":" + location.port + "/ws");
         socket.onopen = function () {
           socket.send(query);
         };
